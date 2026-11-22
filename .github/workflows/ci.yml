@@ -1,0 +1,70 @@
+name: ci
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.1"
+      - name: Format
+        run: terraform fmt -check -recursive
+      - name: Init (sans backend)
+        run: terraform init -backend=false
+      - name: Validate
+        run: terraform validate
+
+  secrets:
+    # Bloque un commit qui contiendrait une clé ou un mot de passe.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.24.3 detect --source=/repo --no-banner --redact
+
+  # Déploiement continu : chaque fusion dans main est appliquée, si tout est vert et si l'environnement existe.
+  # Actif quand la variable DEPLOIEMENT_CONTINU vaut « true ».
+  deploy:
+    needs: [terraform, secrets]
+    if: github.event_name != 'pull_request' && vars.DEPLOIEMENT_CONTINU == 'true'
+    runs-on: ubuntu-latest
+    concurrency: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # Connexion sans mot de passe stocké : GitHub prouve son identité à Azure (OIDC).
+      ARM_USE_OIDC: "true"
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_email_alerte: ${{ secrets.EMAIL_ALERTE }}
+      TF_VAR_gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+      TF_VAR_ips_admin: ${{ secrets.IPS_ADMIN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.1"
+      - name: Init
+        run: terraform init -input=false
+      # Après un terraform destroy, une fusion ne doit pas recréer (et facturer) tout l'environnement.
+      - name: Environnement allumé ?
+        id: environnement
+        run: echo "allume=$(terraform state list | grep -c '^azurerm_resource_group.principal$' || true)" >> "$GITHUB_OUTPUT"
+      - name: Apply
+        if: steps.environnement.outputs.allume == '1'
+        run: terraform apply -input=false -auto-approve -var-file=prod.tfvars

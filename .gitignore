@@ -1,0 +1,13 @@
+# Valeurs secrètes ou personnelles : seul prod.tfvars (sans secret) est versionné
+*.tfvars
+*.tfvars.json
+!prod.tfvars
+!*.tfvars.example
+
+# Terraform : le state contient des données sensibles, il vit dans un Blob privé
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log

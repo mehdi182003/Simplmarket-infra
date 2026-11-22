@@ -1,0 +1,9 @@
+# Copier en terraform.tfvars (jamais versionné : exclu par .gitignore), puis compléter.
+# Terraform le lit tout seul, en plus de -var-file=prod.tfvars.
+
+subscription_id = "az account show --query id -o tsv"
+email_alerte    = "vous@example.org"
+# Clé créée sur Google AI Studio.
+gemini_api_key = "..."
+# Votre adresse publique (curl https://api.ipify.org), suivie de /32. Ajouter celles des coéquipiers.
+ips_admin = ["203.0.113.10/32"]
