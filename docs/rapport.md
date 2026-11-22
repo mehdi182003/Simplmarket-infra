@@ -144,7 +144,18 @@ La requête `SELECT COUNT(*) FROM jobs WHERE statut IN ('en_attente', 'en_cours'
 
 Mesures sur le cluster réel (`demo/pannes.sh` du dépôt de l'application) :
 
-<!-- MESURES-CALCUL -->
+| Scénario | Résultat mesuré | Date |
+|---|---|---|
+| Pic de 60 tâches (`charge`) | KEDA passe de 1 à 6 workers en 30 s ; 60 tâches sur 60 terminées en 41 s (génération simulée) | 21 et 22 nov. |
+| Charge CPU sur l'API (`hpa`) | Le HPA passe de 2 à 4 pods en 65 s (CPU à 161 % de la réservation) ; 5 réponses 200 sur 5 pendant la charge | 22 nov. |
+| Worker tué net, mémoire dépassée (`worker-brutal`) | Pod `OOMKilled` ; ses 5 tâches reprises par un autre worker 75 s après (`JOB_TIMEOUT` de 60 s + 10 s), 10 sur 10 terminées | 22 nov. |
+| PostgreSQL arrêté (`base`) | Les pods d'API sortent de l'équilibrage sans redémarrer, réponse 504 immédiate ; 5 réponses 200 sur 5 après la relance | 22 nov. |
+| Nœud vidé (`noeud`) | Nouveau nœud créé seul dans une autre zone ; coupure du site de 135 s | 8 nov., même configuration AKS |
+| VM de l'unique nœud mise hors tension | Site coupé 3 min, puis rétabli sans aucune intervention | 8 nov. |
+| Autoscaler de nœuds | 1 → 2 nœuds en 1 min quand des pods n'ont plus de place, retour à 1 nœud 10 min après | 8 nov. |
+
+Les coupures de 2 à 3 minutes lors de la perte d'un nœud sont le prix d'un seul nœud hors des pics, car Traefik n'a
+qu'un réplica (section 9).
 
 ### Comparaison avec les alternatives
 
@@ -392,7 +403,13 @@ tuile est une requête KQL sur l'espace Log Analytics :
 - les avertissements Kubernetes ;
 - les archives Blob.
 
-<!-- CAPTURE-TABLEAU -->
+![Tableau de bord Azure Monitor](captures/tableau-de-bord.jpg)
+
+*Le classeur pendant les tests du 22 novembre : disponibilité vue par le test (100 %), requêtes de l'API par code, temps de réponse.*
+
+![Règles d'alerte](captures/alertes.jpg)
+
+*Les trois règles d'alerte Azure Monitor ; le budget est une alerte de Cost Management.*
 
 Les données viennent de deux sources : **Application Insights**, alimenté par l'application (OpenTelemetry :
 requêtes, appels sortants, journaux, métriques métier comme `jobs_en_file`), et **Container Insights** (inventaire
