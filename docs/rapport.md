@@ -146,7 +146,7 @@ Mesures sur le cluster réel (`demo/pannes.sh` du dépôt de l'application) :
 
 | Scénario | Résultat mesuré | Date |
 |---|---|---|
-| Pic de 60 tâches (`charge`) | KEDA passe de 1 à 6 workers en 30 s ; 60 tâches sur 60 terminées en 41 s (génération simulée) | 21 et 22 nov. |
+| Pic de 60 tâches (`charge`) | KEDA passe de 1 à 6 workers en 30 à 40 s ; 60 tâches sur 60 terminées en moins d'une minute (génération simulée) ; retour à 1 worker 4 min après la fin de la file | 21 et 22 nov. |
 | Charge CPU sur l'API (`hpa`) | Le HPA passe de 2 à 4 pods en 65 s (CPU à 161 % de la réservation) ; 5 réponses 200 sur 5 pendant la charge | 22 nov. |
 | Worker tué net, mémoire dépassée (`worker-brutal`) | Pod `OOMKilled` ; ses 5 tâches reprises par un autre worker 75 s après (`JOB_TIMEOUT` de 60 s + 10 s), 10 sur 10 terminées | 22 nov. |
 | PostgreSQL arrêté (`base`) | Les pods d'API sortent de l'équilibrage sans redémarrer, réponse 504 immédiate ; 5 réponses 200 sur 5 après la relance | 22 nov. |
