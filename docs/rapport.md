@@ -273,7 +273,17 @@ Manager et s'exécute dans le cluster. Le runner GitHub n'a donc jamais besoin d
 fermée aux adresses inconnues. `helm upgrade --wait` ne déclare le déploiement réussi que si les nouveaux pods sont
 prêts. Sinon, les anciens continuent de servir, grâce aux mises à jour progressives avec `maxUnavailable: 0`.
 
-<!-- CAPTURES-PIPELINES -->
+![Pull request de l'application](captures/pr-application.jpg)
+
+*Pull request #7 du dépôt de l'application : commits explicites, 6 vérifications vertes avant la fusion.*
+
+![Pipeline de l'application](captures/pipeline-application.jpg)
+
+*Après la fusion dans `main` : tests, build, chart et Gitleaks, puis `deploy` (images dans ACR, chart dans AKS) en 2 min.*
+
+![Pipeline de l'infrastructure](captures/pipeline-infra.jpg)
+
+*Dépôt de l'infrastructure : `terraform fmt` et `validate`, Gitleaks, puis `deploy` (`terraform apply`).*
 
 ### Organisation de l'IaC
 
