@@ -516,6 +516,7 @@ Choix qui font baisser la facture :
 | Alertes sur journaux impossibles en `belgiumcentral` | Règles créées en `francecentral`, qui interrogent l'espace belge |
 | Après chaque redémarrage, Traefik passait le fichier du certificat en 660 et l'ignorait | `fsGroupChangePolicy: OnRootMismatch` et stratégie `Recreate` |
 | Le pare-feu du coffre aurait bloqué Terraform depuis les runners GitHub, dont les adresses changent | Secrets écrits par Azure Resource Manager (`azapi`), que le pare-feu ne filtre pas |
+| `terraform destroy` arrêté par les secrets du coffre : Resource Manager refuse de supprimer un secret seul (`DeleteNotSupported`), la base restait allumée | Secrets écrits par une action PUT (`azapi_resource_action`), sans rien à supprimer : ils disparaissent avec le coffre ; testé sur un coffre jetable |
 | Un cluster oublié allumé pendant 12 jours (environ 50 $) | Budget avec alertes, et règle d'équipe : `terraform destroy` à la fin de chaque séance |
 
 ### Enseignements

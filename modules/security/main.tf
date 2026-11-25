@@ -29,14 +29,15 @@ resource "azurerm_key_vault" "coffre" {
 
 # Écrits par Azure Resource Manager, que le pare-feu du coffre ne filtre pas : Terraform et le pipeline déposent
 # les secrets avec le seul rôle Contributor, sans jamais avoir le droit de les relire.
-resource "azapi_resource" "secret" {
+# Une action PUT plutôt qu'une ressource : Resource Manager ne sait pas supprimer un secret seul
+# (DeleteNotSupported). Rien n'est fait à la destruction : les secrets disparaissent avec le coffre.
+resource "azapi_resource_action" "secret" {
   for_each = nonsensitive(toset(keys(var.secrets)))
 
-  type      = "Microsoft.KeyVault/vaults/secrets@2023-07-01"
-  name      = each.key
-  parent_id = azurerm_key_vault.coffre.id
-  body      = { properties = { value = var.secrets[each.key] } }
-  tags      = var.tags
+  type        = "Microsoft.KeyVault/vaults/secrets@2023-07-01"
+  resource_id = "${azurerm_key_vault.coffre.id}/secrets/${each.key}"
+  method      = "PUT"
+  body        = { properties = { value = var.secrets[each.key] }, tags = var.tags }
 }
 
 # --- Identité de l'application ---------------------------------------------------------------------------------
